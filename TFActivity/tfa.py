@@ -5,10 +5,10 @@ from sklearn.neighbors import NearestNeighbors
 
 def local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num):
     """
-        X is sample*gene; K is neighbor number for selecting window
-        lam_1 is parameter
-        A is the set of TF-gene network of each sample
-        Y is the activation score of TFs
+    X is sample*gene; K is neighbor number for selecting window
+    lam_1 is parameter
+    A is the set of TF-gene network of each sample
+    Y is the activation score of TFs
     """
 
     # number of samples
