@@ -2,6 +2,11 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 
+"""
+Local Network Component Analysis adapted from Shi et al 
+https://www.sciencedirect.com/science/article/pii/S1046202317300506?via=ihub
+
+"""
 
 def local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num):
     """
