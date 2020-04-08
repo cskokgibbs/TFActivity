@@ -187,8 +187,8 @@ def align_TF_activation(Y_vec, S_vec):
 if __name__ == "__main__":
 
     # Read files in
-    X = pd.read_csv("Data/input_expression.csv", sep=',', header=None)
-    NETWORK = pd.read_csv("Data/input_network.csv", sep=',', header=None)
+    X = pd.read_csv("../Data/input_expression.csv", sep=',', header=None)
+    NETWORK = pd.read_csv("../Data/input_network.csv", sep=',', header=None)
 
     # Parameters
     K = 50  # the parameter of k of KNN algorithm
