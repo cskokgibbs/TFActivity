@@ -135,7 +135,7 @@ def optimize_weight(err, window_id, lam_1, k, n):
 
 def fast_network_component_analysis(X, A):
     """
-    FastNCA algorithm adapted from
+    FastNCA adapted from
     Chang C, Ding Z, Hung YS, Fung PCW. Fast network component analysis (FastNCA)
     for gene regulatory network reconstruction from microarray data. Bioinformatics. 2008;24: 1349–1358.
     :param:
