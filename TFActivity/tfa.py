@@ -27,7 +27,7 @@ def local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num):
     window_id_model.fit(X.T)
 
     # Informative matrix of indices of neighbors
-    window_id=window_id_model.kneighbors(X.T)[1]
+    window_id = window_id_model.kneighbors(X.T)[1]
 
     # capturing the index S_i
     S_vec = []
@@ -135,7 +135,9 @@ def optimize_weight(err, window_id, lam_1, k, n):
 
 def fast_network_component_analysis(X, A):
     """
-    FastNCA algorithm
+    FastNCA algorithm adapted from
+    Chang C, Ding Z, Hung YS, Fung PCW. Fast network component analysis (FastNCA)
+    for gene regulatory network reconstruction from microarray data. Bioinformatics. 2008;24: 1349–1358.
     :param:
     X: expression data
     A: connectivity matrix, NETWORK
