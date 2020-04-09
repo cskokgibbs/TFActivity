@@ -12,6 +12,18 @@ https://www.sciencedirect.com/science/article/pii/S1046202317300506?via=ihub
 
 def local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num):
     """
+    Learn transcription factor activity through local similarities using KNN algorithm
+    :param X: pd.dataframe [G x S]. Expression matrix - genes x samples
+    :param K: int, K number of neighbors for KNN
+    :param NETWORK: pd.dataframe [G x TFs]. Prior matrix - genes x TFs
+    :param lam_1: int, default parameter
+    :param iter_num: int, default iteration
+    :param TF_num: int, number of TFs
+    :return: A_vec, Y
+    """
+
+
+    """
     X is sample*gene; K is neighbor number for selecting window
     lam_1 is parameter
     A is the set of TF-gene network of each sample
@@ -22,20 +34,18 @@ def local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num):
     n = X.shape[1]
 
     # capturing the sample window by KNN
-    # Nearest neighbor model
     window_id_model = NearestNeighbors(n_neighbors=K)
     window_id_model.fit(X.T)
 
-    # Informative matrix of indices of neighbors
+    # matrix of indices of neighbors
     window_id = window_id_model.kneighbors(X.T)[1]
 
-    # capturing the index S_i
+    # capturing index S_i
     S_vec = []
     for i in range(n):
         S_i = np.zeros([n, K])
         for temp in range(K):
             S_i[window_id[i,temp]][temp] = 1
-            # S_i[window_id.kneighbors(X.T)[1][i][temp]][temp] = 1
         S_vec.append(S_i)
 
     # capturing the weight w_i(j)
@@ -43,12 +53,10 @@ def local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num):
     for i in range(n):
         W_i = np.zeros([n, n])
         for temp in range(K):
-            W_i[window_id[i,temp]][window_id[i,temp]] = np.sqrt(1 / (K * n))
-            # W_i[window_id.kneighbors(X.T)[1][i][temp]][window_id.kneighbors(X.T)[1][i][temp]] = np.sqrt(1 / (K * n))
+            W_i[window_id[i, temp]][window_id[i, temp]] = np.sqrt(1 / (K * n))
         W_vec.append(W_i)
 
     # Running the FastNCA for each sample neighborhood
-    err_best = np.inf
     for j in range(iter_num):
         A_vec = []
         Y_vec = []
@@ -64,7 +72,7 @@ def local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num):
                 for k in range(A_tmp.shape[1]):
                     sum_temp = A_tmp[:, k].sum()
                     A_tmp[:, k] = A_tmp[:, k] / sum_temp
-                    Y_tmp[k, :] = Y_tmp[k, :]*sum_temp
+                    Y_tmp[k, :] = Y_tmp[k, :] * sum_temp
 
                 A_vec.append(A_tmp)
                 Y_vec.append(Y_tmp)
@@ -73,29 +81,38 @@ def local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num):
                 temp_S_vec.append(S_vec[i])
 
                 temp_window_id.append(window_id[i][:])
-                #temp_window_id.append(window_id.kneighbors(X.T)[1][i][:])
 
-        # capturing the global TF activation by aligning the local TF activation
+        # capture the global TF activation by aligning the local TF activation
         W_vec = temp_W_vec
         S_vec = temp_S_vec
         window_id = temp_window_id
 
         Y = align_TF_activation(Y_vec, S_vec)
 
-        # computing the error
+        # compute the error
         err = []
         for i in range(len(S_vec)):
             temp_err = np.diag((X @ S_vec[i] - A_vec[i] @ Y @ S_vec[i]).T @ (X@S_vec[i]-A_vec[i]@ Y@ S_vec[i]))
             normal_err = np.diag((X @ S_vec[i]).T @ (X@ S_vec[i]))
             err=np.concatenate((err, temp_err/normal_err))
 
-        # optimizing the weight of each sample in each neighbor
+        # optimize the weight of each sample in each neighbor
         W_vec = optimize_weight(err, window_id, lam_1, K, n)
 
     return A_vec, Y
 
 
 def optimize_weight(err, window_id, lam_1, k, n):
+    """
+
+    :param err:
+    :param window_id:
+    :param lam_1:
+    :param k:
+    :param n:
+    :return:
+    """
+
     # optimizing the weight of samples
 
     err_n = err / err.sum()
@@ -159,6 +176,7 @@ def fast_network_component_analysis(X, A):
 
     Ae = np.array(A).astype(float)
     for l in range(M):
+        # U0 = U[np.where(NETWORK.iloc[:, l] == 0)[0], :]
         U0 = U[np.where(NETWORK[:][l] == 0)[0], :]
 
         if U0.shape[0] < M:
@@ -179,7 +197,12 @@ def fast_network_component_analysis(X, A):
 
 
 def align_TF_activation(Y_vec, S_vec):
+    """
 
+    :param Y_vec:
+    :param S_vec:
+    :return:
+    """
     # obtaining matrix for solving the Y
 
     res_1 = Y_vec[0] @ S_vec[0].T
@@ -192,21 +215,22 @@ def align_TF_activation(Y_vec, S_vec):
 
     return Y
 
-
-if __name__ == "__main__":
-
+def main():
     # Read files in
     X = pd.read_csv("../Data/input_expression.csv", sep=',', header=None)
     NETWORK = pd.read_csv("../Data/input_network.csv", sep=',', header=None)
 
     # Parameters
-    K = 50  # the parameter of k of KNN algorithm
+    K = 50  # the parameter of k of KNN algorithm. must be > number of samples
     lam_1 = 1  # default parameter
     iter_num = 2  # iteration number
-    TF_num = 30  # TF number
+    TF_num = NETWORK.shape[1]  # TF number
 
     A_vec, Y = local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num)
 
     print(A_vec)
     print(Y)
     np.savetxt('TF_activities.csv', Y, delimiter=',')
+
+if __name__ == "__main__":
+    main()
