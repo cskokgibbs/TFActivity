@@ -142,7 +142,7 @@ def optimize_weight(err, window_id, lam_1, k, n):
     for i in range(len(window_id)):
         #range(window_id.kneighbors(X.T)[1].shape[0]):
         W_i = np.zeros([n, n])
-        for temp in range(K):
+        for temp in range(k):
             W_i[window_id[i][temp]][window_id[i][temp]] = np.sqrt(W[((i + 1) - 1) * k + temp])
             # W_i[window_id.kneighbors(X.T)[1][i][temp]][window_id.kneighbors(X.T)[1][i][temp]] = np.sqrt(W[((i+1) - 1) * k+temp])
         W_vec.append(W_i)
@@ -177,7 +177,8 @@ def fast_network_component_analysis(X, A):
     Ae = np.array(A).astype(float)
     for l in range(M):
         # U0 = U[np.where(NETWORK.iloc[:, l] == 0)[0], :]
-        U0 = U[np.where(NETWORK[:][l] == 0)[0], :]
+        # U0 = U[np.where(NETWORK[:][l] == 0)[0], :]
+        U0 = U[np.where(A[:][l] == 0)[0], :]
 
         if U0.shape[0] < M:
             UU, SS, VV = np.linalg.svd(U0)
@@ -215,15 +216,53 @@ def align_TF_activation(Y_vec, S_vec):
 
     return Y
 
+def clean_expression(X):
+    """
+    If X is not full rank clean X to be full rank
+    :param X: raw input expression
+    :return: X full rank
+    """
+
+    # remove duplicate samples (columns) from the expression matrix
+    X_dup = X.T.drop_duplicates(keep = "first")
+    X_T = X_dup.T
+    return(X_T)
+
+
+def clean_network(NETWORK):
+    """
+    If NETWORK contains columns that sum to zero, clean data
+    :param NETWORK: input network
+    :return: network containing non-zero columns
+    """
+    # remove all columns that add to zero from NETWORK
+    NETWORK2 = NETWORK.loc[:, (NETWORK != 0).any(axis=0)]
+    return(NETWORK2)
+
+
 def main():
     # Read files in
     X = pd.read_csv("../Data/input_expression.csv", sep=',', header=None)
     NETWORK = pd.read_csv("../Data/input_network.csv", sep=',', header=None)
 
+    # check that X is full rank
+    if np.linalg.matrix_rank(X) < X.shape[1]:
+        print("Expression data is not full rank, fixing matrix...")
+        X = clean_expression(X)
+    else:
+        print("Expression data is full rank")
+
+    # check that prior columns do not sum to zero
+    if (NETWORK.sum() == 0).sum() > 0:
+        print("Cleaning prior")
+        clean_network(NETWORK)
+    else:
+        print("Prior is full rank")
+
     # Parameters
     K = 50  # the parameter of k of KNN algorithm. must be > number of samples
     lam_1 = 1  # default parameter
-    iter_num = 2  # iteration number
+    iter_num = 1  # iteration number
     TF_num = NETWORK.shape[1]  # TF number
 
     A_vec, Y = local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num)
