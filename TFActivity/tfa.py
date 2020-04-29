@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
+import math
 
 """
 Code adapted from 
@@ -65,6 +66,8 @@ def local_network_component_analysis(X, K, NETWORK, lam_1, iter_num, TF_num):
         temp_S_vec = []
 
         for i in range(len(S_vec)):
+
+            print(i)
             if np.count_nonzero(W_vec[i] @ (S_vec[i])) > TF_num:
 
                 A_tmp, Y_tmp = fast_network_component_analysis(X @ W_vec[i] @ S_vec[i], NETWORK)
@@ -170,16 +173,18 @@ def fast_network_component_analysis(X, A):
     A = np.array(A)
 
     U, S, V = np.linalg.svd(X)
-    # M = min(M, S.shape[0])
+    #M = min(M, S.shape[0])
     XM = U[:, 0:M] @ np.diag(S[0:M]) @ V[0:M, :]
     U = U[:, 0:M]  # M-dimensional signal subspace of the data matrix
 
     Ae = np.array(A).astype(float)
     for l in range(M):
+
         # U0 = U[np.where(NETWORK.iloc[:, l] == 0)[0], :]
         # U0 = U[np.where(NETWORK[:][l] == 0)[0], :]
         U0 = U[np.where(A[:][l] == 0)[0], :]
 
+        #print("start SVD", l)
         if U0.shape[0] < M:
             UU, SS, VV = np.linalg.svd(U0)
             t = VV[-1, :].T
@@ -191,6 +196,11 @@ def fast_network_component_analysis(X, A):
         a = np.multiply(a, A[:, l] != 0)
         Ae[:, l] = a / np.abs(a).sum() * np.count_nonzero(A[:, l])
 
+        if np.isnan(Ae).any():
+            raise Exception("Ae matrix in function BLAHBLAH has NaNs")
+        if np.isinf(Ae).any():
+            raise Exception("Ae matrix in function BLAHBLAH has Infinities")
+        print(f"Starting PCA on matrix with shape {Ae.shape}")
     # get the estimate of the TFA matrix
     Se = np.linalg.pinv(Ae) @ XM
 
@@ -242,8 +252,11 @@ def clean_network(NETWORK):
 
 def main():
     # Read files in
-    X = pd.read_csv("../Data/input_expression.csv", sep=',', header=None)
-    NETWORK = pd.read_csv("../Data/input_network.csv", sep=',', header=None)
+    #X = pd.read_csv("../Data/input_expression.csv", sep=',', header=None)
+    #NETWORK = pd.read_csv("../Data/input_network.csv", sep=',', header=None)
+
+    X = pd.read_csv("../expression_full_rank.tsv", sep='\t', index_col=0)
+    NETWORK = pd.read_csv("../prior_clean.tsv", sep='\t', index_col=0)
 
     # check that X is full rank
     if np.linalg.matrix_rank(X) < X.shape[1]:
@@ -260,7 +273,7 @@ def main():
         print("Prior is full rank")
 
     # Parameters
-    K = 50  # the parameter of k of KNN algorithm. must be > number of samples
+    K = 250  # the parameter of k of KNN algorithm. must be > number of samples
     lam_1 = 1  # default parameter
     iter_num = 1  # iteration number
     TF_num = NETWORK.shape[1]  # TF number
