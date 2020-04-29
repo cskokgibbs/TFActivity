@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+import argparse
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
@@ -236,7 +239,7 @@ def clean_expression(X):
     # remove duplicate samples (columns) from the expression matrix
     X_dup = X.T.drop_duplicates(keep = "first")
     X_T = X_dup.T
-    return(X_T)
+    return X_T
 
 
 def clean_network(NETWORK):
@@ -247,16 +250,17 @@ def clean_network(NETWORK):
     """
     # remove all columns that add to zero from NETWORK
     NETWORK2 = NETWORK.loc[:, (NETWORK != 0).any(axis=0)]
-    return(NETWORK2)
+    return NETWORK2
 
 
 def main():
+    cfg = handle_args()
     # Read files in
     #X = pd.read_csv("../Data/input_expression.csv", sep=',', header=None)
     #NETWORK = pd.read_csv("../Data/input_network.csv", sep=',', header=None)
 
-    X = pd.read_csv("../expression_full_rank.tsv", sep='\t', index_col=0)
-    NETWORK = pd.read_csv("../prior_clean.tsv", sep='\t', index_col=0)
+    X = pd.read_csv(cfg.expression,   sep='\t', index_col=0)
+    NETWORK = pd.read_csv(cfg.priors, sep='\t', index_col=0)
 
     # check that X is full rank
     if np.linalg.matrix_rank(X) < X.shape[1]:
@@ -268,7 +272,7 @@ def main():
     # check that prior columns do not sum to zero
     if (NETWORK.sum() == 0).sum() > 0:
         print("Cleaning prior")
-        clean_network(NETWORK)
+        NETWORK = clean_network(NETWORK)
     else:
         print("Prior is full rank")
 
@@ -284,5 +288,12 @@ def main():
     print(Y)
     np.savetxt('TF_activities.csv', Y, delimiter=',')
 
-if __name__ == "__main__":
-    main()
+def handle_args():
+    parser = argparse.ArgumentParser(description="TFA")
+    parser.add_argument("expression", help="tsv of expression")
+    parser.add_argument("priors", help="priors")
+    ret = parser.parse_args()
+    return ret
+
+##########
+main()
