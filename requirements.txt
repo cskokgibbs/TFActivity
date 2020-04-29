@@ -1,1 +1,4 @@
-Requirements: pandas, numpy, scipy, sklearn
+pandas
+numpy
+scipy
+sklearn
