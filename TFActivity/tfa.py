@@ -286,13 +286,13 @@ def main():
 
     print(A_vec)
     print(Y)
-    np.savetxt(cfg.out, Y, delimiter=',')
+    Y.to_csv(cfg.out, sep='\t')
 
 def handle_args():
     parser = argparse.ArgumentParser(description="TFA")
     parser.add_argument("expression", help="tsv of expression")
     parser.add_argument("priors", help="priors")
-    parser.add_argument("--out", default="./TF_activities.csv", help="Filename for output file")
+    parser.add_argument("--out", default="./TF_activities.tsv", help="Filename for output file")
     ret = parser.parse_args()
     return ret
 
