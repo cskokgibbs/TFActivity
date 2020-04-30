@@ -183,9 +183,7 @@ def fast_network_component_analysis(X, A):
     Ae = np.array(A).astype(float)
     for l in range(M):
 
-        # U0 = U[np.where(NETWORK.iloc[:, l] == 0)[0], :]
-        # U0 = U[np.where(NETWORK[:][l] == 0)[0], :]
-        U0 = U[np.where(A[:][l] == 0)[0], :]
+        U0 = U[np.where(A[:,l] == 0)[0], :]
 
         #print("start SVD", l)
         if U0.shape[0] < M:
