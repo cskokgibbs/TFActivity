@@ -256,9 +256,9 @@ def clean_network(NETWORK):
 def main():
     cfg = handle_args()
     # Read files in
-    #X = pd.read_csv("../Data/input_expression.csv", sep=',', header=None)
-    #NETWORK = pd.read_csv("../Data/input_network.csv", sep=',', header=None)
-
+    if os.path.isfile(cfg.out):
+        raise Exception(f"Output file {cfg.out} already exists!")
+    
     X = pd.read_csv(cfg.expression,   sep='\t', index_col=0)
     NETWORK = pd.read_csv(cfg.priors, sep='\t', index_col=0)
 
@@ -286,12 +286,13 @@ def main():
 
     print(A_vec)
     print(Y)
-    np.savetxt('TF_activities.csv', Y, delimiter=',')
+    np.savetxt(cfg.out, Y, delimiter=',')
 
 def handle_args():
     parser = argparse.ArgumentParser(description="TFA")
     parser.add_argument("expression", help="tsv of expression")
     parser.add_argument("priors", help="priors")
+    parser.add_argument("--out", default="./TF_activities.csv", help="Filename for output file")
     ret = parser.parse_args()
     return ret
 
